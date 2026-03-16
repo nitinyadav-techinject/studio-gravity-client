@@ -21,7 +21,7 @@ export interface User {
     phone: string | null;
     mobile: string | null;
     secondaryEmail: string | null;
-    gender: string | null;
+    gender: import('./contact').Gender | null;
     dateOfBirth: string | null;
     accountId: string;
 }

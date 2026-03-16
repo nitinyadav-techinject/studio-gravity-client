@@ -1,3 +1,5 @@
+export type Gender = 'male' | 'female' | 'other';
+
 export interface Contact {
     id: string;
     accountId: string;
@@ -7,7 +9,7 @@ export interface Contact {
     mobile: string | null;
     email: string | null;
     secondaryEmail: string | null;
-    gender: string | null;
+    gender: Gender | null;
     dateOfBirth: string | null;
     mailingStreet: string | null;
     mailingCity: string | null;
@@ -31,7 +33,7 @@ export interface CreateContactRequest {
     phone?: string;
     mobile?: string;
     secondaryEmail?: string;
-    gender?: string;
+    gender?: Gender;
     dateOfBirth?: string;
     mailingStreet?: string;
     mailingCity?: string;

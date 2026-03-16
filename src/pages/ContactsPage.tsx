@@ -80,7 +80,11 @@ const ContactsPage = () => {
   const filteredContacts = contacts.filter(c => {
     const isCurrentUser = c.id === user?.id;
     const sameAccount = c.accountId === user?.accountId;
-    const matchesSearch = `${c.firstName} ${c.lastName} ${c.email} ${c.phone}`.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = `${c.firstName} ${c.lastName} ${c.email} ${c.phone}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    // Exclude the logged-in user from the contacts list;
+    // they edit their own profile via the Profile page instead.
     return sameAccount && !isCurrentUser && matchesSearch;
   });
 
@@ -254,10 +258,20 @@ const ContactsPage = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(contact)} className="hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 rounded-full transition-all">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(contact)}
+                        className="hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 rounded-full transition-all"
+                      >
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(contact.id)} className="hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-full transition-all">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(contact.id)}
+                        className="hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-full transition-all"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
