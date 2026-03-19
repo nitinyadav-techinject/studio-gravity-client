@@ -19,7 +19,7 @@ const LoginPage = () => {
         try {
             const response = await authService.login(formData);
             if (response.success && response.data) {
-                login(response.data.accessToken, response.data.refreshToken, response.data.contact);
+                login(response.data.accessToken, response.data.contact);
                 toast.success('Successfully logged in!');
                 navigate('/dashboard');
             } else {

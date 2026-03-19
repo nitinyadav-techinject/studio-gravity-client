@@ -18,6 +18,31 @@ import DashboardPage from './pages/DashboardPage';
 import ContactsPage from './pages/ContactsPage';
 import ProfilePage from './pages/ProfilePage';
 import UsersListPage from './pages/UsersListPage';
+import MergeAccountsPage from './pages/MergeAccountsPage';
+import ZohoSyncPage from './pages/ZohoSyncPage';
+import AccountsPage from './pages/AccountsPage';
+
+import { useAuth } from './store/AuthContext';
+
+const RoleProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles: string[] }) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  const userRole = user?.role || 'customer';
+  
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+    return <Navigate to="/dashboard/contacts" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,9 +72,32 @@ function App() {
 
             {/* Application Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<DashboardPage />} />
+              <Route index element={
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <DashboardPage />
+                </RoleProtectedRoute>
+              } />
               <Route path="contacts" element={<ContactsPage />} />
-              <Route path="users" element={<UsersListPage />} />
+              <Route path="accounts" element={
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <AccountsPage />
+                </RoleProtectedRoute>
+              } />
+              <Route path="users" element={
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <UsersListPage />
+                </RoleProtectedRoute>
+              } />
+              <Route path="merge-accounts" element={
+                <RoleProtectedRoute allowedRoles={[]}>
+                  <MergeAccountsPage />
+                </RoleProtectedRoute>
+              } />
+              <Route path="zoho-sync" element={
+                <RoleProtectedRoute allowedRoles={['admin']}>
+                  <ZohoSyncPage />
+                </RoleProtectedRoute>
+              } />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={
                 <div className="flex items-center justify-center h-full">

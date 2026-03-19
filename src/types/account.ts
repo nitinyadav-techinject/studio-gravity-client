@@ -35,3 +35,50 @@ export interface CreateAccountRequest {
     shippingCountry?: string;
     description?: string;
 }
+
+export interface UpdateAccountRequest extends Partial<CreateAccountRequest> {}
+
+export interface Contact {
+    id: string;
+    accountId: string;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+    mobile: string | null;
+    email: string | null;
+    secondaryEmail: string | null;
+    gender: string | null;
+    dateOfBirth: string | null;
+    mailingStreet: string | null;
+    mailingCity: string | null;
+    mailingState: string | null;
+    mailingZip: string | null;
+    mailingCountry: string | null;
+    role: 'admin' | 'customer' | null;
+    isPrimaryContact: boolean;
+    description: string | null;
+    emailOptOut: boolean;
+    syncWithZb: boolean;
+    zohoMetaData: any | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MergeAccountsRequest {
+    masterAccountId: string;
+    duplicateAccountIds: string[];
+    fieldOverrides?: Record<string, any>;
+}
+
+export interface MergeAccountsResponse {
+    masterAccountId: string;
+    mergedAccounts: string[];
+    status: string;
+    message: string;
+    jobId?: string;
+}
+
+export interface GetMergeStatusResponse {
+    jobId: string;
+    status: string;
+}

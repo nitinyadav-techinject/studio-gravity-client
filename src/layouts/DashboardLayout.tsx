@@ -10,6 +10,9 @@ import {
   User as UserIcon,
   LayoutDashboard,
   ShieldCheck,
+  GitMerge,
+  RefreshCw,
+  Building,
   X
 } from 'lucide-react';
 
@@ -31,12 +34,19 @@ const DashboardLayout = () => {
   }
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Contacts', href: '/dashboard/contacts', icon: Users },
-    { name: 'Users List', href: '/dashboard/users', icon: ShieldCheck },
-    { name: 'Profile', href: '/dashboard/profile', icon: UserIcon },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-  ];
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
+    { name: 'Accounts', href: '/dashboard/accounts', icon: Building, roles: ['admin'] },
+    { name: 'Contacts', href: '/dashboard/contacts', icon: Users, roles: ['admin', 'customer'] },
+    { name: 'Users List', href: '/dashboard/users', icon: ShieldCheck, roles: ['admin'] },
+    { name: 'Merge Accounts', href: '/dashboard/merge-accounts', icon: GitMerge, roles: [] }, // Hide for now
+    { name: 'Zoho CRM Sync', href: '/dashboard/zoho-sync', icon: RefreshCw, roles: ['admin'] },
+    { name: 'Profile', href: '/dashboard/profile', icon: UserIcon, roles: ['admin', 'customer'] },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['admin', 'customer'] },
+  ].filter(item => {
+    if (item.roles.length === 0) return false;
+    const userRole = user?.role || 'customer';
+    return item.roles.includes(userRole);
+  });
 
   const currentNav = navigation.find(n => location.pathname === n.href) || navigation[0];
 

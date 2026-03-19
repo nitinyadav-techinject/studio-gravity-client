@@ -1,28 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../store/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { contactService } from '../services/contactService';
+import { accountService } from '../services/accountService';
 import {
     User as UserIcon,
     Mail,
     Phone,
-    Briefcase,
     Shield,
     Clock,
     LogOut,
     Smartphone,
     Heart,
-    Calendar
+    Calendar,
+    Building,
+    MapPin,
+    CheckCircle2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 
 const ProfilePage = () => {
     const { user, logout, updateUser } = useAuth();
+    const queryClient = useQueryClient();
     const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+
+    // Fetch account info
+    const { data: accountResponse, isLoading: accountLoading } = useQuery({
+        queryKey: ['account', user?.accountId],
+        queryFn: () => accountService.getAccount(user?.accountId || ''),
+        enabled: !!user?.accountId,
+    });
+
+    const account = accountResponse?.data;
+
     const [form, setForm] = useState(() => ({
         firstName: user?.firstName ?? '',
         lastName: user?.lastName ?? '',
@@ -32,7 +47,48 @@ const ProfilePage = () => {
         secondaryEmail: user?.secondaryEmail ?? '',
         gender: user?.gender ?? '',
         dateOfBirth: user?.dateOfBirth ?? '',
+        mailingStreet: (user as any)?.mailingStreet ?? '',
+        mailingCity: (user as any)?.mailingCity ?? '',
+        mailingState: (user as any)?.mailingState ?? '',
+        mailingZip: (user as any)?.mailingZip ?? '',
+        mailingCountry: (user as any)?.mailingCountry ?? '',
+        // Account fields
+        accountName: account?.accountName ?? '',
+        accountEmail: account?.email ?? '',
+        accountPhone: account?.phone ?? '',
+        billingStreet: account?.billingStreet ?? '',
+        billingCity: account?.billingCity ?? '',
+        billingState: account?.billingState ?? '',
+        billingCode: account?.billingCode ?? '',
+        billingCountry: account?.billingCountry ?? '',
+        shippingStreet: account?.shippingStreet ?? '',
+        shippingCity: account?.shippingCity ?? '',
+        shippingState: account?.shippingState ?? '',
+        shippingCode: account?.shippingCode ?? '',
+        shippingCountry: account?.shippingCountry ?? '',
     }));
+
+    // Update form when account data loads
+    useEffect(() => {
+        if (account) {
+            setForm(prev => ({
+                ...prev,
+                accountName: account.accountName ?? '',
+                accountEmail: account.email ?? '',
+                accountPhone: account.phone ?? '',
+                billingStreet: account.billingStreet ?? '',
+                billingCity: account.billingCity ?? '',
+                billingState: account.billingState ?? '',
+                billingCode: account.billingCode ?? '',
+                billingCountry: account.billingCountry ?? '',
+                shippingStreet: account.shippingStreet ?? '',
+                shippingCity: account.shippingCity ?? '',
+                shippingState: account.shippingState ?? '',
+                shippingCode: account.shippingCode ?? '',
+                shippingCountry: account.shippingCountry ?? '',
+            }));
+        }
+    }, [account]);
 
     if (!user) return null;
 
@@ -45,24 +101,49 @@ const ProfilePage = () => {
         e.preventDefault();
         try {
             setSaving(true);
-            const response = await contactService.updateContact(user.id, {
+            
+            // 1. Update Contact Profile
+            const contactResponse = await contactService.updateContact(user.id, {
                 firstName: form.firstName,
                 lastName: form.lastName,
                 email: form.email,
                 phone: form.phone,
                 mobile: form.mobile || undefined,
                 secondaryEmail: form.secondaryEmail || undefined,
-                gender: form.gender || undefined,
+                gender: (form.gender || undefined) as any,
                 dateOfBirth: form.dateOfBirth || undefined,
+                mailingStreet: form.mailingStreet || undefined,
+                mailingCity: form.mailingCity || undefined,
+                mailingState: form.mailingState || undefined,
+                mailingZip: form.mailingZip || undefined,
+                mailingCountry: form.mailingCountry || undefined,
             });
-            if (response.data) {
-                // keep accountId and ids from existing user, merge editable fields
+
+            // 2. Update Account Information if account exists
+            if (user.accountId) {
+                await accountService.updateAccount(user.accountId, {
+                    email: form.accountEmail || null,
+                    phone: form.accountPhone || null,
+                    billingStreet: form.billingStreet || null,
+                    billingCity: form.billingCity || null,
+                    billingState: form.billingState || null,
+                    billingCode: form.billingCode || null,
+                    billingCountry: form.billingCountry || null,
+                    shippingStreet: form.shippingStreet || null,
+                    shippingCity: form.shippingCity || null,
+                    shippingState: form.shippingState || null,
+                    shippingCode: form.shippingCode || null,
+                    shippingCountry: form.shippingCountry || null,
+                } as any);
+                queryClient.invalidateQueries({ queryKey: ['account', user.accountId] });
+            }
+
+            if (contactResponse.data) {
                 updateUser({
                     ...user,
-                    ...response.data,
+                    ...contactResponse.data,
                 });
             } else {
-                // fallback: update from local form
                 updateUser({
                     ...user,
                     firstName: form.firstName,
@@ -75,9 +156,8 @@ const ProfilePage = () => {
                     dateOfBirth: form.dateOfBirth || null,
                 });
             }
-            toast.success('Profile updated');
+            toast.success('Profile and Account updated');
             setIsEditing(false);
-            // Optional: refresh page or refetch profile from backend if you want AuthContext to stay in sync
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to update profile');
         } finally {
@@ -103,7 +183,7 @@ const ProfilePage = () => {
                         <h2 className="mt-6 text-xl font-bold text-white tracking-tight">
                             {user.firstName} {user.lastName}
                         </h2>
-                        <p className="text-indigo-400 text-sm font-medium mt-1">Administrator</p>
+                        <p className="text-indigo-400 text-sm font-medium mt-1 capitalize">{user.role || 'Customer'}</p>
 
                         <div className="w-full grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-white/5">
                             <div className="text-center">
@@ -198,10 +278,23 @@ const ProfilePage = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Designation</p>
+                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Role</p>
                                         <div className="flex items-center gap-2 text-white">
-                                            <Briefcase className="h-4 w-4 text-slate-400" />
-                                            <span>System Administrator</span>
+                                            <Shield className="h-4 w-4 text-slate-400" />
+                                            <span className="capitalize">{user.role || 'Customer'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="sm:col-span-2 pt-4 border-t border-white/5">
+                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Mailing Address</p>
+                                        <div className="flex items-start gap-2 text-white/80">
+                                            <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
+                                            <div className="text-sm">
+                                                <p>{(user as any).mailingStreet || 'Street not provided'}</p>
+                                                <p className="text-xs text-slate-400">
+                                                    {(user as any).mailingCity || 'City'}, {(user as any).mailingState || 'State'} {(user as any).mailingZip || 'ZIP'}
+                                                </p>
+                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-tighter">{(user as any).mailingCountry || 'Country'}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -270,6 +363,38 @@ const ProfilePage = () => {
                                             onChange={handleChange('dateOfBirth')}
                                         />
                                     </div>
+                                    <div className="pt-4 border-t border-white/5 space-y-4">
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Edit Mailing Address</p>
+                                        <Input
+                                            label="Street"
+                                            value={form.mailingStreet}
+                                            onChange={(e) => setForm({ ...form, mailingStreet: e.target.value })}
+                                        />
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <Input
+                                                label="City"
+                                                value={form.mailingCity}
+                                                onChange={(e) => setForm({ ...form, mailingCity: e.target.value })}
+                                            />
+                                            <Input
+                                                label="State"
+                                                value={form.mailingState}
+                                                onChange={(e) => setForm({ ...form, mailingState: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <Input
+                                                label="ZIP Code"
+                                                value={form.mailingZip}
+                                                onChange={(e) => setForm({ ...form, mailingZip: e.target.value })}
+                                            />
+                                            <Input
+                                                label="Country"
+                                                value={form.mailingCountry}
+                                                onChange={(e) => setForm({ ...form, mailingCountry: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="flex justify-end gap-3 pt-2">
                                         <Button
                                             type="button"
@@ -285,6 +410,24 @@ const ProfilePage = () => {
                                                     secondaryEmail: user.secondaryEmail ?? '',
                                                     gender: user.gender ?? '',
                                                     dateOfBirth: user.dateOfBirth ?? '',
+                                                    mailingStreet: (user as any).mailingStreet ?? '',
+                                                    mailingCity: (user as any).mailingCity ?? '',
+                                                    mailingState: (user as any).mailingState ?? '',
+                                                    mailingZip: (user as any).mailingZip ?? '',
+                                                    mailingCountry: (user as any).mailingCountry ?? '',
+                                                    accountName: account?.accountName ?? '',
+                                                    accountEmail: account?.email ?? '',
+                                                    accountPhone: account?.phone ?? '',
+                                                    billingStreet: account?.billingStreet ?? '',
+                                                    billingCity: account?.billingCity ?? '',
+                                                    billingState: account?.billingState ?? '',
+                                                    billingCode: account?.billingCode ?? '',
+                                                    billingCountry: account?.billingCountry ?? '',
+                                                    shippingStreet: account?.shippingStreet ?? '',
+                                                    shippingCity: account?.shippingCity ?? '',
+                                                    shippingState: account?.shippingState ?? '',
+                                                    shippingCode: account?.shippingCode ?? '',
+                                                    shippingCountry: account?.shippingCountry ?? '',
                                                 });
                                             }}
                                             className="text-slate-400 hover:text-white"
@@ -300,25 +443,207 @@ const ProfilePage = () => {
                         </CardContent>
                     </Card>
 
+                    {/* Account Section */}
+                    {user.accountId && (
+                        <Card className="border-white/5 bg-slate-900/50 backdrop-blur-xl">
+                            <CardHeader className="border-b border-white/5 pb-4">
+                                <CardTitle className="text-lg flex items-center gap-2 text-white">
+                                    <Building className="h-5 w-5 text-indigo-500" />
+                                    Account & Business Information
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-6">
+                                {!isEditing ? (
+                                    <div className="space-y-8">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Account Name</p>
+                                                <p className="text-sm text-white font-medium">{account?.accountName || 'No account name'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Account ID</p>
+                                                <code className="text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
+                                                    {user.accountId}
+                                                </code>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Account Email</p>
+                                                <p className="text-sm text-white flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-slate-500" /> {account?.email || 'N/A'}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Account Phone</p>
+                                                <p className="text-sm text-white flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-slate-500" /> {account?.phone || 'N/A'}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 text-indigo-400">
+                                                    <MapPin className="h-4 w-4" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Billing Address</span>
+                                                </div>
+                                                <div className="space-y-1.5 pl-6 border-l border-indigo-500/20">
+                                                    <p className="text-sm text-white">{account?.billingStreet || 'Street not set'}</p>
+                                                    <p className="text-xs text-slate-400">{account?.billingCity}, {account?.billingState} {account?.billingCode}</p>
+                                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">{account?.billingCountry}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 text-emerald-400">
+                                                    <MapPin className="h-4 w-4" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Shipping Address</span>
+                                                </div>
+                                                <div className="space-y-1.5 pl-6 border-l border-emerald-500/20">
+                                                    <p className="text-sm text-white">{account?.shippingStreet || 'Street not set'}</p>
+                                                    <p className="text-xs text-slate-400">{account?.shippingCity}, {account?.shippingState} {account?.shippingCode}</p>
+                                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">{account?.shippingCountry}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6 animate-in fade-in duration-300">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Account Email</label>
+                                                <Input
+                                                    type="email"
+                                                    value={form.accountEmail}
+                                                    onChange={(e) => setForm({ ...form, accountEmail: e.target.value })}
+                                                    placeholder="business@email.com"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Account Phone</label>
+                                                <Input
+                                                    value={form.accountPhone}
+                                                    onChange={(e) => setForm({ ...form, accountPhone: e.target.value })}
+                                                    placeholder="Business Phone"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                                            <div className="space-y-4 pt-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-indigo-400">
+                                                        <MapPin className="h-4 w-4" />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">Billing Address</span>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <Input
+                                                        label="Street"
+                                                        value={form.billingStreet}
+                                                        onChange={(e) => setForm({ ...form, billingStreet: e.target.value })}
+                                                    />
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <Input
+                                                            label="City"
+                                                            value={form.billingCity}
+                                                            onChange={(e) => setForm({ ...form, billingCity: e.target.value })}
+                                                        />
+                                                        <Input
+                                                            label="State"
+                                                            value={form.billingState}
+                                                            onChange={(e) => setForm({ ...form, billingState: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <Input
+                                                            label="ZIP Code"
+                                                            value={form.billingCode}
+                                                            onChange={(e) => setForm({ ...form, billingCode: e.target.value })}
+                                                        />
+                                                        <Input
+                                                            label="Country"
+                                                            value={form.billingCountry}
+                                                            onChange={(e) => setForm({ ...form, billingCountry: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4 pt-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2 text-emerald-400">
+                                                        <MapPin className="h-4 w-4" />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">Shipping Address</span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setForm(prev => ({
+                                                            ...prev,
+                                                            shippingStreet: prev.billingStreet,
+                                                            shippingCity: prev.billingCity,
+                                                            shippingState: prev.billingState,
+                                                            shippingCode: prev.billingCode,
+                                                            shippingCountry: prev.billingCountry,
+                                                        }))}
+                                                        className="text-[9px] font-black text-emerald-500 hover:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20"
+                                                    >
+                                                        Copy Billing
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <Input
+                                                        label="Street"
+                                                        value={form.shippingStreet}
+                                                        onChange={(e) => setForm({ ...form, shippingStreet: e.target.value })}
+                                                    />
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <Input
+                                                            label="City"
+                                                            value={form.shippingCity}
+                                                            onChange={(e) => setForm({ ...form, shippingCity: e.target.value })}
+                                                        />
+                                                        <Input
+                                                            label="State"
+                                                            value={form.shippingState}
+                                                            onChange={(e) => setForm({ ...form, shippingState: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <Input
+                                                            label="ZIP Code"
+                                                            value={form.shippingCode}
+                                                            onChange={(e) => setForm({ ...form, shippingCode: e.target.value })}
+                                                        />
+                                                        <Input
+                                                            label="Country"
+                                                            value={form.shippingCountry}
+                                                            onChange={(e) => setForm({ ...form, shippingCountry: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+
                     <Card className="border-white/5 bg-slate-900/50 backdrop-blur-xl">
                         <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
+                            <CardTitle className="text-lg flex items-center gap-2 text-white">
                                 <Clock className="h-5 w-5 text-indigo-500" />
-                                Security & Account
+                                System Info
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="space-y-1">
-                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Account ID</p>
-                                <code className="text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
-                                    {user.accountId}
-                                </code>
-                            </div>
                             <div className="space-y-1">
                                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">System ID</p>
                                 <code className="text-[10px] text-slate-400 bg-white/5 px-2 py-1 rounded">
                                     {user.id}
                                 </code>
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Role</p>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-tighter ${user.role === 'admin' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}`}>
+                                    {user.role || 'customer'}
+                                </span>
                             </div>
                         </CardContent>
                     </Card>

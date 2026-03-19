@@ -24,13 +24,14 @@ export interface User {
     gender: import('./contact').Gender | null;
     dateOfBirth: string | null;
     accountId: string;
+    role: 'admin' | 'customer' | null;
 }
 
 export interface AuthResponse {
     accessToken: string;
-    refreshToken: string;
+    refreshToken?: string; // Set as optional since it now moves to HttpOnly cookie
     accessTokenExpiresAt: string;
-    refreshTokenExpiresAt: string;
+    refreshTokenExpiresAt?: string;
     expiresIn: string;
     contact: User;
 }
