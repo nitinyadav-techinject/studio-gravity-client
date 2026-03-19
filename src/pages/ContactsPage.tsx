@@ -266,14 +266,14 @@ const ContactsPage = () => {
                       >
                         <Edit2 className="h-4 w-4" />
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(contact.id)}
                         className="hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-full transition-all"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </td>
                 </tr>
