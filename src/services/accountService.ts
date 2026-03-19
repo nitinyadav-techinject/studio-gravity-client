@@ -37,7 +37,7 @@ export const accountService = {
     },
 
     getContactsByAccountId: async (accountId: string): Promise<DTO<Contact[]>> => {
-        const response = await api.get<DTO<Contact[]>>(`/contacts/account/${accountId}`);
+        const response = await api.get<DTO<Contact[]>>(`/contacts/by-account/${accountId}`);
         return response.data;
     },
 

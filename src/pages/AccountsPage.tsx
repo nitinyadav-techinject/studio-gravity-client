@@ -167,9 +167,9 @@ const AccountsPage = () => {
           <h1 className="text-2xl font-black text-white tracking-tight text-white mb-2">Accounts</h1>
           <p className="text-slate-400">View and manage all organization accounts and their contacts.</p>
         </div>
-        <Button onClick={() => setIsAccountModalOpen(true)} className="gap-2 px-6">
+        {/* <Button onClick={() => setIsAccountModalOpen(true)} className="gap-2 px-6">
           <Plus className="h-4 w-4" /> Add Account
-        </Button>
+        </Button> */}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -212,12 +212,13 @@ const AccountsPage = () => {
                           </div>
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
+                          {/* <button
+                            disabled
                             onClick={(e) => { e.stopPropagation(); handleEditAccount(account); }}
-                            className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white"
+                            className="p-1.5 rounded-md hover:bg-white/10 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Edit2 className="h-3 w-3" />
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
@@ -263,14 +264,14 @@ const AccountsPage = () => {
                               </div>
                             </div>
                             <div className="flex gap-2 mb-2">
-                              <Button variant="outline" size="sm" onClick={() => handleEditAccount(account)} className="gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-white">
+                              {/* <Button disabled variant="outline" size="sm" onClick={() => handleEditAccount(account)} className="gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-white disabled:opacity-50">
                                 <Edit2 className="h-3.5 w-3.5" /> Edit Account
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => {
+                              <Button disabled variant="ghost" size="sm" onClick={() => {
                                 if(window.confirm('Delete account and all its contacts?')) deleteAccountMutation.mutate(account.id);
-                              }} className="text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                              }} className="text-red-400 hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50">
                                 <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              </Button> */}
                             </div>
                           </div>
                           
@@ -339,20 +340,22 @@ const AccountsPage = () => {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                       <div className="flex justify-end gap-1">
-                                        <button
+                                        {/* <button
+                                          disabled
                                           onClick={() => handleEditContact(contact)}
-                                          className="p-1.5 rounded-lg hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 transition-all"
+                                          className="p-1.5 rounded-lg hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                           <Edit2 className="h-3.5 w-3.5" />
                                         </button>
                                         <button
+                                          disabled
                                           onClick={() => {
                                             if(window.confirm('Delete this contact?')) deleteContactMutation.mutate(contact.id);
                                           }}
-                                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all"
+                                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                           <Trash2 className="h-3.5 w-3.5" />
-                                        </button>
+                                        </button> */}
                                       </div>
                                     </td>
                                   </tr>

@@ -17,6 +17,7 @@ export interface Account {
     syncWithZb: boolean;
     createdAt: string;
     updatedAt: string;
+    Contacts?: Contact[];
 }
 
 export interface CreateAccountRequest {
